@@ -1,2 +1,2 @@
 # SMS_SPAM_DETECTION
-Sms Spam Detection using ML on Google Colab
+Sms Spam Detection using Google Colab on ML
