@@ -1,0 +1,123 @@
+#Importing packages 
+
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+%matplotlib inline
+
+#Uploading Data from Local Machine
+
+from google.colab import files
+uploaded = files.upload()
+
+#Read Data
+df = pd.read_csv('spam.csv',encoding='latin-1')
+
+#Showing first 5 data
+
+df.head()
+
+#Remove Unnecessary Column and Rename the column
+df = df.drop(["Unnamed: 2", "Unnamed: 3", "Unnamed: 4"], axis=1)
+df = df.rename(columns={"v1":"label", "v2":"text"})
+
+#Describe the data
+df.describe()
+#Describe the data with column name
+df.groupby("label").describe()
+
+#Distribution of the target variable
+df.label.value_counts()
+
+#Bar Plot
+df.label.value_counts().plot.bar();
+
+#Add feature: length of message
+df['length'] = df['text'].apply(len)
+
+#check the data whether 'length' column is added or not
+df.head(10)
+
+#check null values
+df.isnull()
+
+#check sum of null values
+df.isnull().sum()
+#Histogram
+plt.xscale('log')
+bins = 1.15**(np.arange(0,50))
+plt.hist(df[df['label']=='ham']['length'],bins= bins,alpha=0.8)
+plt.hist(df[df['label']=='spam']['length'],bins= bins,alpha=0.8)
+plt.legend(('ham','spam'))
+plt.show()
+
+#import train_test_split
+from sklearn.model_selection import train_test_split
+
+#divide the data in train_test
+# x is feature data
+x = df['text']
+# y  label data
+y= df['label']
+x_train, x_test, y_train, y_test = train_test_split( x, y, test_size=0.3, random_state=42)
+
+#shape of x_train
+x_train.shape
+
+
+#features extraction
+from sklearn.feature_extraction.text import CountVectorizer
+count_vect = CountVectorizer()
+
+x_train_counts = count_vect.fit_transform(x_train)
+x_train_counts.shape
+#transformer
+from sklearn.feature_extraction.text import TfidfTransformer
+tfidf_transformer = TfidfTransformer()
+
+x_train_tfidf = tfidf_transformer.fit_transform(x_train_counts)
+x_train_tfidf.shape
+
+#TFIDVECTORIZER
+from sklearn.feature_extraction.text import TfidfVectorizer
+vectorizer = TfidfVectorizer()
+
+x_train_tfidf = vectorizer.fit_transform(x_train) # remember to use the original x_train set
+
+#LinerSVC
+from sklearn.svm import LinearSVC
+clf = LinearSVC()
+clf.fit(x_train_tfidf,y_train)
+
+#Pipeline
+from sklearn.pipeline import Pipeline
+# from sklearn.feature_extraction.text import TfidfVectorizer
+# from sklearn.svm import LinearSVC
+
+text_clf = Pipeline([('tfidf', TfidfVectorizer()),
+                     ('clf', LinearSVC()),
+])
+
+# Feed the training data through the pipeline
+text_clf.fit(x_train, y_train) 
+
+# Form a prediction set
+p = text_clf.predict(x_test)
+
+# Report the confusion matrix
+from sklearn import metrics
+print(metrics.confusion_matrix(y_test,p))
+
+# Print a classification report
+print(metrics.classification_report(y_test,p))
+x_train_tfidf.shape
+
+# Print the overall accuracy
+print(metrics.accuracy_score(y_test,p))
+
+#for checking the model
+text_clf.predict(['Hi, How are you doing?'])
+#o/p: array(['ham'], dtype=object)
+
+text_clf.predict(['Congratulations, you have been selected as Winner, please dial 1234 for the winner gift'])
+#o/p: array(['spam'], dtype=object)
